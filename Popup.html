@@ -1,63 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OmniAssist AI</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniAssist AI Quick Controller</title>
+  <link rel="stylesheet" href="Style.css">
 </head>
 <body class="popup-body">
   <div class="popup-container">
     <header class="popup-header">
       <div class="brand">
-        <span class="brand-icon">⚡</span>
-        <div>
-          <h2>OmniAssist AI</h2>
-          <span class="badge">Universal v3.0</span>
-        </div>
+        <span class="logo">⚡</span>
+        <h3>OmniAssist AI</h3>
       </div>
-      <button id="open-web-app" class="icon-btn" title="Open Full Companion Dashboard">↗</button>
+      <span class="badge-status">MV3 Active</span>
     </header>
 
-    <div class="search-section">
-      <input type="text" id="popup-search-input" placeholder="Search memories across Gemini, GPT, Claude..." autofocus />
-      <button id="btn-trigger-inpage-search" class="action-btn small" title="Highlight search in current page">In-Page Search</button>
-    </div>
+    <main class="popup-main">
+      <button class="btn primary full-width popup-btn" id="btn-open-dashboard">
+        🖥️ Launch Memory Companion Dashboard
+      </button>
 
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="tab-saved">Saved (<span id="saved-count">0</span>)</button>
-      <button class="tab-btn" data-tab="tab-tools">Export & Tools</button>
-    </div>
+      <button class="btn outline full-width popup-btn" id="btn-save-turn">
+        📌 Bookmark Current Page Turn
+      </button>
 
-    <div id="tab-saved" class="tab-content active">
-      <div id="saved-list" class="saved-list">
-        <div class="empty-state">No saved memories yet. Bookmark turns on Gemini, ChatGPT, Claude, or Poe!</div>
+      <div class="popup-search-box">
+        <input type="text" id="popup-search-input" placeholder="Quick search in-page..." />
+        <button class="btn secondary" id="btn-popup-search">🔍 Search</button>
       </div>
-    </div>
 
-    <div id="tab-tools" class="tab-content">
-      <div class="tools-grid">
-        <button id="btn-export-json" class="tool-card">
-          <span>💾 Export JSON</span>
-          <small>Backup all memories across AI platforms</small>
-        </button>
-        <button id="btn-export-md" class="tool-card">
-          <span>📝 Export Markdown</span>
-          <small>Formatted for Obsidian, Notion & notes</small>
-        </button>
-        <button id="btn-clear-all" class="tool-card danger">
-          <span>🗑️ Clear Storage</span>
-          <small>Remove all saved AI memories</small>
-        </button>
+      <div class="popup-stats" id="popup-stats-summary">
+        <span>Memory Items: <strong id="popup-count-val">0</strong></span>
       </div>
-    </div>
+    </main>
 
     <footer class="popup-footer">
-      <span id="status-msg">Ready</span>
-      <a href="https://github.com/Karthik8639-collab/Chatgpt--Smart-Assit" target="_blank" class="footer-link">GitHub Repo</a>
+      <span>Zero-Cloud Local Encryption Protocol</span>
     </footer>
   </div>
 
-  <script src="popup.js"></script>
+  <script src="Popup.js"></script>
 </body>
 </html>
