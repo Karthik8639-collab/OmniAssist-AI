@@ -8,13 +8,21 @@
     "activeTab",
     "scripting",
     "storage",
+    "contextMenus",
     "clipboardWrite"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://gemini.google.com/*",
+    "https://claude.ai/*",
+    "https://perplexity.ai/*",
+    "https://*.deepseek.com/*",
+    "https://poe.com/*",
+    "https://chat.mistral.ai/*"
   ],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "Popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -27,10 +35,18 @@
   "content_scripts": [
     {
       "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://gemini.google.com/*",
+        "https://claude.ai/*",
+        "https://perplexity.ai/*",
+        "https://*.deepseek.com/*",
+        "https://poe.com/*",
+        "https://chat.mistral.ai/*",
         "<all_urls>"
       ],
       "js": ["content.js"],
-      "css": ["style.css"],
+      "css": ["Style.css"],
       "run_at": "document_idle"
     }
   ],
