@@ -3,6 +3,9 @@
  * Universal multi-provider AI storage & background coordinator for Gemini, ChatGPT, Claude, Perplexity, DeepSeek, and more.
  */
 
+let storageLock = false;
+const storageQueue = [];
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(["chatRecall", "smartAssistSettings"], (result) => {
     if (!result.chatRecall) {
@@ -19,23 +22,25 @@ chrome.runtime.onInstalled.addListener(() => {
     }
   });
 
-  chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({
-      id: "omniassist_save_selection",
-      title: "📌 Save to OmniAssist Memory",
-      contexts: ["selection"]
-    });
+  if (chrome.contextMenus) {
+    chrome.contextMenus.removeAll(() => {
+      chrome.contextMenus.create({
+        id: "omniassist_save_selection",
+        title: "📌 Save to OmniAssist Memory",
+        contexts: ["selection"]
+      });
 
-    chrome.contextMenus.create({
-      id: "omniassist_search_selection",
-      title: "🔍 Search this text with OmniAssist",
-      contexts: ["selection"]
+      chrome.contextMenus.create({
+        id: "omniassist_search_selection",
+        title: "🔍 Search this text with OmniAssist",
+        contexts: ["selection"]
+      });
     });
-  });
+  }
 });
 
 function detectProviderFromUrl(url) {
-  if (!url) return "Web";
+  if (!url) return "Web Page";
   const u = url.toLowerCase();
   if (u.includes("gemini.google.com")) return "Gemini";
   if (u.includes("chatgpt.com") || u.includes("chat.openai.com")) return "ChatGPT";
@@ -48,37 +53,39 @@ function detectProviderFromUrl(url) {
   return "Web Page";
 }
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (!tab || !tab.id) return;
+if (chrome.contextMenus && chrome.contextMenus.onClicked) {
+  chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (!tab || !tab.id) return;
 
-  if (info.menuItemId === "omniassist_save_selection" && info.selectionText) {
-    const selectedText = info.selectionText.trim();
-    const provider = detectProviderFromUrl(tab.url);
-    saveMessageToStorage({
-      id: Date.now().toString(),
-      title: selectedText.substring(0, 45) + (selectedText.length > 45 ? "..." : ""),
-      text: selectedText,
-      source: tab.url || "Web Page",
-      provider: provider,
-      time: new Date().toLocaleString(),
-      tags: ["quick-save", provider.toLowerCase()],
-      isFavorite: false
-    });
-  } else if (info.menuItemId === "omniassist_search_selection" && info.selectionText) {
-    chrome.tabs.sendMessage(
-      tab.id,
-      {
-        action: "HIGHLIGHT_SEARCH",
-        term: info.selectionText
-      },
-      () => {
-        if (chrome.runtime.lastError) {
-          // Suppress error if active page has no content script
+    if (info.menuItemId === "omniassist_save_selection" && info.selectionText) {
+      const selectedText = info.selectionText.trim();
+      const provider = detectProviderFromUrl(tab.url);
+      saveMessageToStorage({
+        id: Date.now().toString(),
+        title: selectedText.substring(0, 45) + (selectedText.length > 45 ? "..." : ""),
+        text: selectedText,
+        source: tab.url || "Web Page",
+        provider: provider,
+        time: new Date().toLocaleString(),
+        tags: ["quick-save", provider.toLowerCase()],
+        isFavorite: false
+      });
+    } else if (info.menuItemId === "omniassist_search_selection" && info.selectionText) {
+      chrome.tabs.sendMessage(
+        tab.id,
+        {
+          action: "HIGHLIGHT_SEARCH",
+          term: info.selectionText
+        },
+        () => {
+          if (chrome.runtime.lastError) {
+            // Silently suppress if script not present
+          }
         }
-      }
-    );
-  }
-});
+      );
+    }
+  });
+}
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "SAVE_MESSAGE") {
@@ -102,6 +109,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function saveMessageToStorage(item, callback) {
+  storageQueue.push({ item, callback });
+  processStorageQueue();
+}
+
+function processStorageQueue() {
+  if (storageLock || storageQueue.length === 0) return;
+  storageLock = true;
+
+  const { item, callback } = storageQueue.shift();
+
   chrome.storage.local.get(["chatRecall"], (result) => {
     const messages = result.chatRecall || [];
     const exists = messages.some((m) => m.text === item.text);
@@ -112,10 +129,14 @@ function saveMessageToStorage(item, callback) {
       }
       messages.unshift(item);
       chrome.storage.local.set({ chatRecall: messages }, () => {
-        if (callback) callback({ status: "success", message: "Saved to OmniAssist memory!" });
+        storageLock = false;
+        if (callback) callback({ status: "success", message: `Saved to OmniAssist (${item.provider})!` });
+        processStorageQueue();
       });
-    } else if (callback) {
-      callback({ status: "duplicate", message: "Message already exists in memory." });
+    } else {
+      storageLock = false;
+      if (callback) callback({ status: "duplicate", message: "Message already exists in memory." });
+      processStorageQueue();
     }
   });
 }
