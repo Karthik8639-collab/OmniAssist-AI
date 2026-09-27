@@ -1,6 +1,6 @@
 /**
  * OmniAssist AI - Content Script
- * Universal In-Page Engine for Gemini, ChatGPT, Claude, Perplexity, DeepSeek, Poe, and Any AI/Web Page.
+ * Universal In-Page Engine for Gemini, ChatGPT, Claude, Perplexity, DeepSeek, Poe, and Any Web Page.
  */
 
 (function () {
@@ -94,7 +94,6 @@
     `;
 
     document.body.appendChild(widget);
-
     makeDraggable(widget, document.getElementById("smartassist-header"));
 
     document.getElementById("smartassist-toggle-btn").addEventListener("click", (e) => {
@@ -373,7 +372,7 @@
       .slice(-3)
       .join("\n- ");
 
-    const summaryText = `📊 **${providerInfo.name} Summary**\n• Total Turns: ${turns.length}\n• Total Words: ~${totalWords}\n• Recent Topics:\n- ${keyPhrases}`;
+    const summaryText = `📊 ${providerInfo.name} Summary\n• Total Turns: ${turns.length}\n• Total Words: ~${totalWords}\n• Recent Topics:\n- ${keyPhrases}`;
     alert(summaryText);
   }
 
