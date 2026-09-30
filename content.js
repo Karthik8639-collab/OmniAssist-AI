@@ -1,6 +1,7 @@
 /**
- * OmniAssist AI - Content Script
+ * OmniAssist AI - Content Script (v4.0 Supermax)
  * Universal In-Page Engine for Gemini, ChatGPT, Claude, Perplexity, DeepSeek, Poe, and Any Web Page.
+ * Features: Two-pass Search Highlighter, One-Click Prompt Context Injector, Draggable Panel, Turn Capture.
  */
 
 (function () {
@@ -21,6 +22,7 @@
   function initOmniAssist() {
     createFloatingWidget();
     attachMessageListeners();
+    attachKeyboardShortcuts();
     observeChatDOM();
   }
 
@@ -59,6 +61,60 @@
     return "article, main, p, [role='main'], [data-message], .message";
   }
 
+  function findActiveInputBox() {
+    const host = window.location.hostname.toLowerCase();
+    let input = null;
+
+    if (host.includes("gemini.google.com")) {
+      input = document.querySelector("rich-textarea div[contenteditable='true'], .query-input textarea, textarea");
+    } else if (host.includes("chatgpt.com") || host.includes("chat.openai.com")) {
+      input = document.querySelector("#prompt-textarea, textarea[placeholder*='ChatGPT'], textarea");
+    } else if (host.includes("claude.ai")) {
+      input = document.querySelector("div[contenteditable='true'], textarea");
+    } else if (host.includes("perplexity.ai")) {
+      input = document.querySelector("textarea[placeholder*='Ask'], textarea");
+    } else if (host.includes("deepseek.com")) {
+      input = document.querySelector("textarea, div[contenteditable='true']");
+    } else if (host.includes("poe.com")) {
+      input = document.querySelector("textarea[placeholder*='Send'], textarea");
+    }
+
+    if (!input) {
+      input = document.querySelector("textarea, div[contenteditable='true'], input[type='text']");
+    }
+    return input;
+  }
+
+  function injectContextIntoInput(textToInject) {
+    const input = findActiveInputBox();
+    if (!input) {
+      showNotification("⚠️ No input text box found on page.");
+      return;
+    }
+
+    const formattedContext = `[Context Memory Snippet]:\n${textToInject}\n\n`;
+
+    if (input.tagName === "TEXTAREA" || input.tagName === "INPUT") {
+      const current = input.value || "";
+      input.value = formattedContext + current;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.focus();
+    } else if (input.isContentEditable) {
+      input.focus();
+      const textNode = document.createTextNode(formattedContext);
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        range.insertNode(textNode);
+      } else {
+        input.appendChild(textNode);
+      }
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    showNotification(`⚡ Context injected into ${providerInfo.name} input!`);
+  }
+
   function createFloatingWidget() {
     if (document.getElementById("smartassist-widget")) return;
 
@@ -88,12 +144,14 @@
         </div>
         <div class="smartassist-action-btns">
           <button id="smartassist-save-chat-btn" class="smartassist-btn">📌 Bookmark Turn</button>
-          <button id="smartassist-summarize-btn" class="smartassist-btn secondary">⚡ Summarize Chat</button>
+          <button id="smartassist-inject-btn" class="smartassist-btn accent">⚡ Drop Context into Input</button>
+          <button id="smartassist-summarize-btn" class="smartassist-btn secondary">📊 Summarize Chat</button>
         </div>
       </div>
     `;
 
     document.body.appendChild(widget);
+
     makeDraggable(widget, document.getElementById("smartassist-header"));
 
     document.getElementById("smartassist-toggle-btn").addEventListener("click", (e) => {
@@ -116,7 +174,33 @@
     document.getElementById("smartassist-clear-search").addEventListener("click", clearSearchHighlights);
 
     document.getElementById("smartassist-save-chat-btn").addEventListener("click", saveCurrentChatTurn);
+    document.getElementById("smartassist-inject-btn").addEventListener("click", () => {
+      fetchLatestMemoryAndInject();
+    });
     document.getElementById("smartassist-summarize-btn").addEventListener("click", summarizeCurrentChat);
+  }
+
+  function fetchLatestMemoryAndInject() {
+    try {
+      if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ action: "GET_ALL_MESSAGES" }, (resp) => {
+          if (resp && resp.data && resp.data.length > 0) {
+            injectContextIntoInput(resp.data[0].text);
+          } else {
+            showNotification("⚠️ No saved memories available to inject.");
+          }
+        });
+      } else {
+        let saved = JSON.parse(localStorage.getItem("chatRecall") || "[]");
+        if (saved.length > 0) {
+          injectContextIntoInput(saved[0].text);
+        } else {
+          showNotification("⚠️ No saved memories available to inject.");
+        }
+      }
+    } catch (e) {
+      showNotification("⚠️ Context injection failed.");
+    }
   }
 
   function makeDraggable(element, handle) {
@@ -160,6 +244,9 @@
             if (input) input.value = request.term;
             performInPageSearch(request.term);
             sendResponse({ status: "success" });
+          } else if (request.action === "INJECT_CONTEXT") {
+            injectContextIntoInput(request.text || request.title);
+            sendResponse({ status: "success" });
           } else if (request.action === "EXTRACT_CURRENT_CHAT") {
             const turns = extractChatTurns();
             sendResponse({ status: "success", data: turns, provider: providerInfo.name });
@@ -170,6 +257,15 @@
         return true;
       });
     }
+  }
+
+  function attachKeyboardShortcuts() {
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "i") {
+        e.preventDefault();
+        fetchLatestMemoryAndInject();
+      }
+    });
   }
 
   function performInPageSearch(term) {
@@ -372,7 +468,7 @@
       .slice(-3)
       .join("\n- ");
 
-    const summaryText = `📊 ${providerInfo.name} Summary\n• Total Turns: ${turns.length}\n• Total Words: ~${totalWords}\n• Recent Topics:\n- ${keyPhrases}`;
+    const summaryText = `📊 **${providerInfo.name} Summary**\n• Total Turns: ${turns.length}\n• Total Words: ~${totalWords}\n• Recent Topics:\n- ${keyPhrases}`;
     alert(summaryText);
   }
 
