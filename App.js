@@ -1,5 +1,6 @@
 /**
- * OmniAssist AI - Universal Companion Engine (XSS-Immune Secure Node Architecture)
+ * OmniAssist AI - Universal Companion Engine (v4.0 Supermax)
+ * Multi-provider local memory manager for Gemini, ChatGPT, Claude, Perplexity, DeepSeek, Poe, and custom entries.
  */
 
 (function () {
@@ -255,111 +256,61 @@
     }
 
     if (filtered.length === 0) {
-      const emptyDiv = document.createElement("div");
-      emptyDiv.className = "empty-state-large";
-      
-      const iconSpan = document.createElement("span");
-      iconSpan.className = "empty-icon";
-      iconSpan.textContent = "📂";
-      
-      const h3 = document.createElement("h3");
-      h3.textContent = "No memories match your query";
-      
-      const p = document.createElement("p");
-      p.textContent = "Try searching for another keyword or click '+ New Memory' to add one.";
-      
-      emptyDiv.appendChild(iconSpan);
-      emptyDiv.appendChild(h3);
-      emptyDiv.appendChild(p);
-      container.appendChild(emptyDiv);
+      container.innerHTML = `
+        <div class="empty-state-large">
+          <span class="empty-icon">📂</span>
+          <h3>No memories match your query</h3>
+          <p>Try searching for another keyword or click "+ New Memory" to add one.</p>
+        </div>
+      `;
       return;
     }
 
     filtered.forEach((msg) => {
-      const card = createSecureCardNode(msg);
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const provider = getProviderName(msg);
+      const titleText = escapeHtml(msg.title || "Saved Memory");
+      const snippetText = escapeHtml(msg.text.length > 200 ? msg.text.substring(0, 200) + "..." : msg.text);
+      const timeText = escapeHtml(msg.time || "N/A");
+      const favClass = msg.isFavorite ? "fav-active" : "";
+
+      const tagsHtml = (msg.tags || [provider.toLowerCase()])
+        .map((t) => `<span class="tag">#${escapeHtml(t)}</span>`)
+        .join(" ");
+
+      card.innerHTML = `
+        <div class="card-header">
+          <div>
+            <span class="provider-badge badge-${provider.toLowerCase()}">${provider}</span>
+            <h4 class="card-title">${highlightText(titleText, activeSearchQuery)}</h4>
+          </div>
+          <button class="star-btn ${favClass}" data-id="${msg.id}">${msg.isFavorite ? "★" : "☆"}</button>
+        </div>
+        <div class="card-meta">
+          <span>🕒 ${timeText}</span>
+        </div>
+        <p class="card-snippet">${highlightText(snippetText, activeSearchQuery)}</p>
+        <div class="card-tags">${tagsHtml}</div>
+        <div class="card-actions">
+          <button class="btn small outline view-btn" data-id="${msg.id}">👁️ View</button>
+          <button class="btn small outline copy-btn" data-text="${escapeHtmlAttribute(msg.text)}">📋 Copy</button>
+          <button class="btn small danger delete-btn" data-id="${msg.id}">🗑️ Delete</button>
+        </div>
+      `;
+
+      card.querySelector(".star-btn").addEventListener("click", () => toggleFavorite(msg.id));
+      card.querySelector(".view-btn").addEventListener("click", () => openViewModal(msg));
+      card.querySelector(".copy-btn").addEventListener("click", (e) => {
+        navigator.clipboard.writeText(msg.text);
+        e.target.textContent = "✓ Copied";
+        setTimeout(() => (e.target.textContent = "📋 Copy"), 1500);
+      });
+      card.querySelector(".delete-btn").addEventListener("click", () => deleteMemory(msg.id));
+
       container.appendChild(card);
     });
-  }
-
-  function createSecureCardNode(msg) {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const provider = getProviderName(msg);
-
-    const header = document.createElement("div");
-    header.className = "card-header";
-
-    const titleGroup = document.createElement("div");
-    const badge = document.createElement("span");
-    badge.className = `provider-badge badge-${provider.toLowerCase()}`;
-    badge.textContent = provider;
-
-    const h4 = document.createElement("h4");
-    h4.className = "card-title";
-    h4.textContent = msg.title || "Saved Memory";
-
-    titleGroup.appendChild(badge);
-    titleGroup.appendChild(h4);
-
-    const starBtn = document.createElement("button");
-    starBtn.className = `star-btn ${msg.isFavorite ? "fav-active" : ""}`;
-    starBtn.textContent = msg.isFavorite ? "★" : "☆";
-    starBtn.addEventListener("click", () => toggleFavorite(msg.id));
-
-    header.appendChild(titleGroup);
-    header.appendChild(starBtn);
-    card.appendChild(header);
-
-    const meta = document.createElement("div");
-    meta.className = "card-meta";
-    meta.textContent = `🕒 ${msg.time || "N/A"}`;
-    card.appendChild(meta);
-
-    const snippet = document.createElement("p");
-    snippet.className = "card-snippet";
-    snippet.textContent = msg.text.length > 200 ? msg.text.substring(0, 200) + "..." : msg.text;
-    card.appendChild(snippet);
-
-    const tagsDiv = document.createElement("div");
-    tagsDiv.className = "card-tags";
-    (msg.tags || [provider.toLowerCase()]).forEach((t) => {
-      const tagSpan = document.createElement("span");
-      tagSpan.className = "tag";
-      tagSpan.textContent = `#${t}`;
-      tagsDiv.appendChild(tagSpan);
-    });
-    card.appendChild(tagsDiv);
-
-    const actions = document.createElement("div");
-    actions.className = "card-actions";
-
-    const viewBtn = document.createElement("button");
-    viewBtn.className = "btn small outline view-btn";
-    viewBtn.textContent = "👁️ View";
-    viewBtn.addEventListener("click", () => openViewModal(msg));
-
-    const copyBtn = document.createElement("button");
-    copyBtn.className = "btn small outline copy-btn";
-    copyBtn.textContent = "📋 Copy";
-    copyBtn.addEventListener("click", () => {
-      navigator.clipboard.writeText(msg.text);
-      copyBtn.textContent = "✓ Copied";
-      setTimeout(() => (copyBtn.textContent = "📋 Copy"), 1500);
-    });
-
-    const delBtn = document.createElement("button");
-    delBtn.className = "btn small danger delete-btn";
-    delBtn.textContent = "🗑️ Delete";
-    delBtn.addEventListener("click", () => deleteMemory(msg.id));
-
-    actions.appendChild(viewBtn);
-    actions.appendChild(copyBtn);
-    actions.appendChild(delBtn);
-
-    card.appendChild(actions);
-
-    return card;
   }
 
   function toggleFavorite(id) {
@@ -464,5 +415,21 @@
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+
+  function escapeHtmlAttribute(str) {
+    if (!str) return "";
+    return str.replace(/"/g, "&quot;");
+  }
+
+  function highlightText(text, query) {
+    if (!query) return text;
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    return text.replace(regex, '<mark class="highlight">$1</mark>');
   }
 })();
