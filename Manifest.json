@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "OmniAssist AI - Universal Chat Recall & Productivity Suite",
   "short_name": "OmniAssist",
-  "description": "Supercharge ChatGPT, Gemini, Claude, Perplexity, DeepSeek, Poe, and any AI chat with in-page search, memory recall, turn bookmarking, and local exports.",
-  "version": "3.0.0",
+  "description": "Supercharge ChatGPT, Gemini, Claude, Perplexity, DeepSeek, Poe, and any AI with in-page search, turn bookmarking, context injection, and local exports.",
+  "version": "4.0.0",
   "permissions": [
     "activeTab",
     "scripting",
@@ -12,17 +12,10 @@
     "clipboardWrite"
   ],
   "host_permissions": [
-    "https://chatgpt.com/*",
-    "https://chat.openai.com/*",
-    "https://gemini.google.com/*",
-    "https://claude.ai/*",
-    "https://perplexity.ai/*",
-    "https://*.deepseek.com/*",
-    "https://poe.com/*",
-    "https://chat.mistral.ai/*"
+    "<all_urls>"
   ],
   "action": {
-    "default_popup": "Popup.html",
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -35,18 +28,10 @@
   "content_scripts": [
     {
       "matches": [
-        "https://chatgpt.com/*",
-        "https://chat.openai.com/*",
-        "https://gemini.google.com/*",
-        "https://claude.ai/*",
-        "https://perplexity.ai/*",
-        "https://*.deepseek.com/*",
-        "https://poe.com/*",
-        "https://chat.mistral.ai/*",
         "<all_urls>"
       ],
       "js": ["content.js"],
-      "css": ["Style.css"],
+      "css": ["style.css"],
       "run_at": "document_idle"
     }
   ],
