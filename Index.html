@@ -1,157 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OmniAssist AI - Universal Chat Recall & Companion</title>
-  <link rel="stylesheet" href="Style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OmniAssist AI - Universal AI Companion Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 </head>
-<body>
+<body class="app-body">
   <div class="app-layout">
     <aside class="sidebar">
-      <div class="brand">
-        <span class="logo">⚡</span>
-        <h2>OmniAssist <span class="version">v3.0</span></h2>
+      <div class="sidebar-brand">
+        <div class="logo-icon">⚡</div>
+        <div class="logo-text">
+          <h1>OmniAssist AI</h1>
+          <span class="subtext">Universal Companion v4.0</span>
+        </div>
       </div>
 
       <nav class="sidebar-nav">
         <button class="nav-item active" data-view="all">
-          <span class="icon">📂</span> All Memories <span class="count-badge" id="count-all">0</span>
+          <span class="icon">💬</span> All Memories (<span id="count-all">0</span>)
         </button>
         <button class="nav-item" data-view="favorites">
-          <span class="icon">★</span> Favorites <span class="count-badge" id="count-fav">0</span>
+          <span class="icon">⭐</span> Bookmarks (<span id="count-fav">0</span>)
         </button>
-
-        <div class="nav-section-label">AI PROVIDERS</div>
         <button class="nav-item" data-view="gemini">
-          <span class="icon">✨</span> Gemini <span class="count-badge" id="count-gemini">0</span>
+          <span class="icon">✨</span> Gemini Captures (<span id="count-gemini">0</span>)
         </button>
         <button class="nav-item" data-view="chatgpt">
-          <span class="icon">🤖</span> ChatGPT <span class="count-badge" id="count-gpt">0</span>
+          <span class="icon">🤖</span> ChatGPT Captures (<span id="count-gpt">0</span>)
         </button>
         <button class="nav-item" data-view="claude">
-          <span class="icon">🟧</span> Claude <span class="count-badge" id="count-claude">0</span>
+          <span class="icon">🟧</span> Claude Captures (<span id="count-claude">0</span>)
         </button>
         <button class="nav-item" data-view="other">
-          <span class="icon">🌐</span> Other Platforms <span class="count-badge" id="count-other">0</span>
+          <span class="icon">🌐</span> Web & Other (<span id="count-other">0</span>)
         </button>
       </nav>
 
       <div class="sidebar-footer">
-        <div class="stat-box">
-          <div class="stat-title">Memory Allocation</div>
-          <div class="stat-value" id="stat-storage">0 KB</div>
-        </div>
-        <button class="btn secondary full-width" id="btn-load-demo">🧪 Load Sample Demo</button>
+        <button id="btn-open-add-modal" class="btn primary block">+ New Memory</button>
       </div>
     </aside>
 
     <main class="main-content">
-      <header class="topbar">
-        <div class="search-container">
+      <header class="top-header">
+        <div class="search-bar-wrapper">
           <span class="search-icon">🔍</span>
-          <input type="text" id="searchBar" placeholder="Search prompts, responses, or tags... (Ctrl+F)" />
+          <input type="text" id="searchBar" placeholder="Search prompts across Gemini, ChatGPT, Claude..." />
           <button id="btn-clear-search" class="clear-search-btn" style="display:none;">✕</button>
         </div>
 
-        <div class="action-toolbar">
-          <button class="btn primary" id="btn-open-add-modal">➕ New Memory</button>
-
-          <div class="dropdown-wrapper">
-            <button class="btn outline" id="btn-export-dropdown">📤 Export ▼</button>
-            <div class="dropdown-menu" id="export-menu" style="display:none;">
-              <button id="export-json">💾 Export JSON Backup</button>
-              <button id="export-md">📝 Export Markdown (.md)</button>
-            </div>
-          </div>
-
-          <button class="btn outline" id="btn-import-file">📥 Import JSON</button>
+        <div class="header-actions">
+          <button id="btn-load-demo" class="btn outline small" title="Load sample multi-provider AI data">Load Demo</button>
+          <button id="btn-import-file" class="btn outline small">📥 Import JSON</button>
           <input type="file" id="file-input-json" accept=".json" style="display:none;" />
-
-          <button class="btn danger outline" id="btnClearAll">🗑️ Clear All</button>
+          <button id="btn-export-dropdown" class="btn secondary small">💾 Export ▾</button>
+          <div id="export-menu" class="dropdown-menu" style="display:none;">
+            <button id="export-json">Export JSON</button>
+            <button id="export-md">Export Markdown</button>
+          </div>
+          <button id="btnClearAll" class="btn danger small">🗑️ Clear All</button>
         </div>
       </header>
 
-      <div class="metrics-row">
-        <div class="metric-card">
-          <span class="metric-label">Total Saved Turns</span>
-          <span class="metric-value" id="stat-total">0</span>
+      <section class="content-body">
+        <div class="stats-banner">
+          <div class="stat-card">
+            <span class="stat-num" id="stat-total">0</span>
+            <span class="stat-label">Total Saved</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num" id="stat-today">0</span>
+            <span class="stat-label">Saved Today</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num" id="stat-storage">0 KB</span>
+            <span class="stat-label">Local Storage</span>
+          </div>
         </div>
-        <div class="metric-card">
-          <span class="metric-label">Saved Today</span>
-          <span class="metric-value" id="stat-today">0</span>
-        </div>
-        <div class="metric-card">
-          <span class="metric-label">Local Encryption</span>
-          <span class="metric-value green">AES / LocalStorage</span>
-        </div>
-      </div>
 
-      <div class="grid" id="messagesContainer"></div>
+        <div id="messagesContainer" class="messages-grid"></div>
+      </section>
     </main>
   </div>
 
-  <div class="modal-overlay" id="modal-add" style="display:none;">
+  <div id="modal-add" class="modal-backdrop" style="display:none;">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>📌 Add New AI Memory</h3>
-        <button class="close-btn" id="modal-add-close">✕</button>
+        <h3>📌 Add New Memory</h3>
+        <button class="modal-close" id="modal-add-close">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>Memory Title</label>
-          <input type="text" id="input-title" placeholder="e.g. Python Asyncio TaskGroup Pattern" />
+          <label for="input-title">Title / Topic</label>
+          <input type="text" id="input-title" placeholder="e.g., Gemini 1.5 Pro Context Window comparison" />
         </div>
         <div class="form-group">
-          <label>AI Platform Provider</label>
+          <label for="input-provider">AI Provider</label>
           <select id="input-provider">
             <option value="Gemini">✨ Gemini</option>
-            <option value="ChatGPT" selected>🤖 ChatGPT</option>
+            <option value="ChatGPT">🤖 ChatGPT</option>
             <option value="Claude">🟧 Claude</option>
             <option value="Perplexity">🔍 Perplexity</option>
             <option value="DeepSeek">🐋 DeepSeek</option>
             <option value="Poe">⚡ Poe</option>
-            <option value="Other">🌐 Custom Web Page</option>
+            <option value="Web">🌐 Web / Other</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Conversation Text / Prompt Response</label>
-          <textarea id="input-text" rows="6" placeholder="Paste conversation turn content here..."></textarea>
+          <label for="input-text">Prompt & Answer Content</label>
+          <textarea id="input-text" rows="6" placeholder="Paste conversation, code snippets, or AI output..."></textarea>
         </div>
         <div class="form-group">
-          <label>Tags (comma separated)</label>
-          <input type="text" id="input-tags" placeholder="e.g. python, asyncio, code-snippet" />
+          <label for="input-tags">Tags (comma separated)</label>
+          <input type="text" id="input-tags" placeholder="gemini, benchmark, code" />
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn primary full-width" id="btn-save-new-memory">Save Memory</button>
+        <button id="btn-save-new-memory" class="btn primary">Save Memory</button>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="modal-view" style="display:none;">
+  <div id="modal-view" class="modal-backdrop" style="display:none;">
     <div class="modal-card large">
       <div class="modal-header">
-        <div>
-          <span id="view-provider" class="provider-badge">Gemini</span>
-          <h3 id="view-title" style="display:inline-block; margin-left:8px;">Memory Detail</h3>
-        </div>
-        <button class="close-btn" id="modal-view-close">✕</button>
+        <h3 id="view-title">Memory Detail</h3>
+        <button class="modal-close" id="modal-view-close">✕</button>
       </div>
       <div class="modal-body">
-        <div class="modal-meta-row">
-          <span>🕒 <span id="view-time">--</span></span> |
-          <span>🌐 Source: <span id="view-source">--</span></span>
+        <div class="meta-info">
+          <span id="view-provider" class="provider-badge">Provider</span> | <span id="view-time">Timestamp</span> | <span id="view-source">Source</span>
         </div>
-        <pre class="code-view-block" id="view-text-content"></pre>
+        <pre id="view-text-content" class="code-preview"></pre>
       </div>
       <div class="modal-footer">
-        <button class="btn outline" id="btn-copy-view">📋 Copy Content</button>
+        <button id="btn-copy-view" class="btn secondary">📋 Copy Text</button>
       </div>
     </div>
   </div>
 
-  <script src="App.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
